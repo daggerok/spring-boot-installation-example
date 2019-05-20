@@ -1,0 +1,65 @@
+dist: trusty
+git:
+  quiet: true
+  depth: 1
+notifications:
+  email: false
+language: java
+jdk: openjdk8
+python: 3
+service:
+  - docker
+addons:
+  apt:
+    update: true
+    packages:
+      - sudo
+      - lsof
+      - wget
+      - bash
+      - curl
+      - jq
+      - docker-ce
+      - python3-pip
+install: true
+before_install:
+  - export PATH=$HOME/.local/bin:$PATH
+  - pip3 install --user $(whoami) --upgrade pip
+  - pip3 install --user $(whoami) --upgrade httpie >/dev/null 2>&1
+  - pip -V
+  - pip3 -V
+  - docker -v
+  #
+  - source <(curl -s https://raw.githubusercontent.com/daggerok/bash-functions/master/main.bash)
+  - stop_any 80 8001 8002 8080 5432 27017
+env:
+  global:
+    secure: k1bNz0t3hN+zQnDgjy3Wa+Feb7+vrPbVZjjHtr9KMXhtF/a43y0x0qB4pmtPkiewN/517NUkaVhuG9REk7VmYBKwI9te4nKeXvN9cA81TLvsiEGEbZ3JcmNodynjWULZLiBNbEF4I74xZ0MkcI034622J3nw99vNNC7mA8va5ExGaCcjucry2ZY0WvTcl8HdQT/F+es/H+iw2TLxOxZOfJWI9NOmG16d01rAG1o5HjW0md8b+Wz7fVXHVNCCvwdpP7BiWPyZNhEu1HQPJi8VRNtwXSng8YSIHjH6utnB7wbyAQHQAftM58oN4JnzJigS8ahdMGFByfyY133hJeNChaTnhUvaZ0N9QbGa+IVwCUWnS+sRE6MhDTvCRV8izNRsG6V6JzpNbA4ZCqQkzf6IS4JKXE1V1BwnNg+8ByBMnN6k7vgCY26dcNhiuCTKXxJQzj37fsGhV3iIxAFU1GohcIs3wlHLZjwomaUlOxWoIndCnPQXiFnijrEqLNt7oT0XKmevVJXEstQTvAyaPmGdMqbeQpQ4Mrwtvvd3Jae8AlJpWuYTViR95JVHFrBFvFStPXVNz7fqHNKy48fBqiEQTnniB+0HT5Ffeiwb0z1K82aY/vJuOz+pjKc0eBCGgviaSMkQl9Il/ivahiCAcQqNgFfkabMsyvR+UcD2/DWqyAc=
+script:
+  # travis is not supports spring-boot installations, so we will be using docker instead
+  - docker pull openjdk:11.0.3-jre-stretch
+  # maven
+  - ./mvnw >/dev/null
+  - docker build --no-cache -t maven -f docker/maven/Dockerfile .
+  - docker run -d --rm -p 80:8080 --name maven-app maven
+  - wait_healthy_docker_containers
+  - http :80
+  - http :80/actuator/info | jq '.'
+  - docker rm -f -v maven-app
+  - stop_any 80 8080
+  # gradle
+  - ./gradlew >/dev/null
+  - docker build --no-cache -t gradle -f docker/gradle/Dockerfile .
+  - docker run -d --rm -p 80:8080 --name gradle-app gradle
+  - wait_healthy_docker_containers 1
+  - http :80
+  - http :80/actuator/health | jq '.'
+  - docker rm -f -v gradle-app
+  - stop_any 80 8080
+cache:
+  pip: true
+  packages: true
+  directories:
+    - ~/.docker
+    - ~/.gradle
+    - ~/.m2

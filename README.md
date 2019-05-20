@@ -1,4 +1,4 @@
-# spring-boot-installation-example
+# spring-boot-installation-example [![Build Status](https://travis-ci.org/daggerok/spring-boot-installation-example.svg?branch=master)](https://travis-ci.org/daggerok/spring-boot-installation-example)
 Spring Boot installation on linux. Build executable shell JARs using Gradle / Maven build tools.
 
 ## maven

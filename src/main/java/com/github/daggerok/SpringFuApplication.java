@@ -220,10 +220,6 @@ public class SpringFuApplication {
                     })
                     .router(router -> {
                       UserHandler userHandler = c.ref(UserHandler.class);
-                      router.GET("/", userHandler::getAll);
-                    })
-                    .router(router -> {
-                      UserHandler userHandler = c.ref(UserHandler.class);
                       router.POST("/", userHandler::add);
                     })
                     .router(router -> {
@@ -237,6 +233,10 @@ public class SpringFuApplication {
                     .router(router -> {
                       UserHandler userHandler = c.ref(UserHandler.class);
                       router.DELETE("/", userHandler::rmAll);
+                    })
+                    .router(router -> {
+                      UserHandler userHandler = c.ref(UserHandler.class);
+                      router.GET("/**", userHandler::getAll);
                     })
                     .codecs(codecs -> codecs.string()
                                             .jackson())
